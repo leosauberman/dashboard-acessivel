@@ -20,8 +20,7 @@ interface BarChartProps extends HighchartsReact.Props {
 
 export const BarChartHero = ({data, title, xAxisLabel, ...props}: BarChartProps) => {
     const chartComponentRef = useRef<HighchartsReact.RefObject | null>(null);
-    //@ts-ignore
-    const [options, setOptions] = useState<Highcharts.Options>({
+    const [options, setOptions] = useState({
         chart: {
             type: 'column',
         },
@@ -29,17 +28,14 @@ export const BarChartHero = ({data, title, xAxisLabel, ...props}: BarChartProps)
             text: title,
             widthAdjust: -100,
             useHTML: true
-        },
-        series: [{
-            data: []
-        }]
+        }
     });
 
     const formattedChartData = useMemo(() => {
         const series = Object.entries(data).map(([k, v]) => {
             return {
                 name: k,
-                data: v
+                data: v,
             }
         })
 

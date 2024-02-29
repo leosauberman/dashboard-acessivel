@@ -59,15 +59,15 @@ export default function Dashboard() {
             const res = await response.json();
 
             const arrays: { [key: string]: number[] } = {};
-            res.rows.forEach((row: any[]) => {
+            res.rows.forEach((row: [string, number]) => {
                 const [label, count] = row;
                 if (!arrays[label]) {
                     arrays[label] = [];
                 }
-                arrays[label].push([count]);
+                arrays[label].push(count);
             });
 
-            const cols = res.columns.map((c) => c.name);
+            const cols = res.columns.map((c: { name: string, type: string}) => c.name);
 
             setData(arrays);
             setColumns(cols);

@@ -23,7 +23,7 @@ export const TableA11y = ({data, columns, title}: TableA11yProps) => {
                     </TableHead>
                     <TableBody>
                         {
-                            Object.entries(data).map(([k, v], i) => (
+                            Object.entries(data).map(([k, [v]], i) => (
                                 <TableRow key={i}>
                                     <TableCell className="font-bold">{k}</TableCell>
                                     <TableCell>{Intl.NumberFormat('pt-BR').format(v)}</TableCell>
