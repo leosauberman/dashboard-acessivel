@@ -41,7 +41,7 @@ export default function Dashboard() {
             },
             body: JSON.stringify({
                 token: {
-                    token: process.env.TOKEN
+                    token: process.env.NEXT_PUBLIC_TOKEN
                 },
                 query: {
                     index: 'datasus-sinasc',
