@@ -1,0 +1,77 @@
+import {BarChart} from '@tremor/react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import * as Highcharts from 'highcharts'
+import HighchartsExporting from 'highcharts/modules/exporting'
+import HighchartsReact from 'highcharts-react-official'
+require('highcharts/modules/accessibility')(Highcharts);
+
+if (typeof Highcharts === 'object') {
+    HighchartsExporting(Highcharts);
+}
+
+const dataFormatter = (number: number) =>
+    Intl.NumberFormat('pt').format(number).toString();
+
+interface BarChartProps extends HighchartsReact.Props {
+    data: { [key: string]: number[] },
+    title: string;
+    xAxisLabel: string;
+}
+
+export const BarChartHero = ({data, title, xAxisLabel, ...props}: BarChartProps) => {
+    const chartComponentRef = useRef<HighchartsReact.RefObject | null>(null);
+    //@ts-ignore
+    const [options, setOptions] = useState<Highcharts.Options>({
+        chart: {
+            type: 'column',
+        },
+        title: {
+            text: title,
+            widthAdjust: -100,
+            useHTML: true
+        },
+        series: [{
+            data: []
+        }]
+    });
+
+    const formattedChartData = useMemo(() => {
+        const series = Object.entries(data).map(([k, v]) => {
+            return {
+                name: k,
+                data: v
+            }
+        })
+
+        return [{categories: [xAxisLabel]}, series];
+    }, [data, xAxisLabel])
+
+    useEffect(() => {
+        const [xAxis, series] = formattedChartData;
+        setOptions((prev) => ({
+            ...prev,
+            xAxis,
+            series
+        }))
+    }, [formattedChartData, setOptions])
+
+    return (
+        <>
+            <HighchartsReact
+                highcharts={Highcharts}
+                options={options}
+                ref={chartComponentRef}
+                {...props}
+            />
+            {/*<BarChart
+                className="p-3"
+                data={formattedChartData()}
+                index="name"
+                categories={['Ano Obito']}
+                colors={['amber']}
+                valueFormatter={dataFormatter}
+                yAxisWidth={96}
+                onValueChange={(v) => console.log(v)}
+            />*/}
+        </>);
+}
