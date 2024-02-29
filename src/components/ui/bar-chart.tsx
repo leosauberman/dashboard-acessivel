@@ -3,10 +3,10 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import * as Highcharts from 'highcharts'
 import HighchartsExporting from 'highcharts/modules/exporting'
 import HighchartsReact from 'highcharts-react-official'
-require('highcharts/modules/accessibility')(Highcharts);
 
 if (typeof Highcharts === 'object') {
     HighchartsExporting(Highcharts);
+    require('highcharts/modules/accessibility')(Highcharts);
 }
 
 const dataFormatter = (number: number) =>
