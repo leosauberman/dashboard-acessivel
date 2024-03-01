@@ -1,13 +1,13 @@
 import {Select, SelectItem, Text, Title,} from "@tremor/react";
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {BarChartHero} from "@/components/ui/bar-chart";
 import {Indicador, indicadores} from "@/lib/indicadores";
 import {TipoVisualizacao} from "@/lib/utils";
 import {TableA11y} from "@/components/ui/table";
 
 export default function Dashboard() {
-    const [indicador, setIndicador] = useState<Indicador>();
-    const [indicadorVar, setIndicadorVar] = useState("");
+    const [indicador, setIndicador] = useState<Indicador>(indicadores[0]);
+    const [indicadorVar, setIndicadorVar] = useState(indicador.campo);
     const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Grafico);
     /*const [estado, setEstado] = useState<string[]>([]);
     const [ano, setAno] = useState<string[]>([]);
@@ -25,7 +25,7 @@ export default function Dashboard() {
         // setFiltros({ estado, ano, regiao});
     }, [estado, ano, regiao])*/
 
-    const aplicarSelecao = useCallback(async (indicador_campo: string) => {
+    const aplicarSelecao = useCallback(async (indicadorSelecionado: Indicador) => {
         fetch('https://bigdata-api.fiocruz.br/json_query', {
             method: 'POST',
             headers: {
@@ -38,7 +38,7 @@ export default function Dashboard() {
                 },
                 query: {
                     index: 'datasus-sinasc',
-                    columns: [indicador_campo],
+                    columns: [indicadorSelecionado.campo],
                     text: 1,
                     filters: {
                         /*idade_obito_anos: [0],
@@ -70,14 +70,18 @@ export default function Dashboard() {
         if(indicadorSelecionado) {
             setIndicador(indicadorSelecionado);
             setTituloGrafico(indicadorSelecionado.nome);
+            // aplicarSelecao(indicadorSelecionado);
         }
-        aplicarSelecao(campo);
-    }, [aplicarSelecao]);
+    }, []);
 
     const handleChangeVisualizacao = useCallback((value: string) => {
         setVisualizacao(value as TipoVisualizacao);
         setMostrarVisualizacao(value as TipoVisualizacao);
     }, [])
+
+    useEffect(() => {
+        aplicarSelecao(indicador).then(() => setMostrarVisualizacao(TipoVisualizacao.Grafico));
+    }, [aplicarSelecao, indicador])
 
     return (
         <>
