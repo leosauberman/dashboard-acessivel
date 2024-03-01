@@ -1,38 +1,31 @@
-import {Button, MultiSelect, MultiSelectItem, Select, SelectItem, Text, Title,} from "@tremor/react";
-import {useCallback, useState} from "react";
-import ModalFiltros from "@/components/ui/modal-filtros";
-import {ESTADOS_UF} from "@/lib/estados-uf";
+import {Select, SelectItem, Text, Title,} from "@tremor/react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {BarChartHero} from "@/components/ui/bar-chart";
 import {Indicador, indicadores} from "@/lib/indicadores";
 import {TipoVisualizacao} from "@/lib/utils";
 import {TableA11y} from "@/components/ui/table";
 
 export default function Dashboard() {
-    const [indicadorVar, setIndicadorVar] = useState("");
     const [indicador, setIndicador] = useState<Indicador>();
-    const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Nenhuma);
-    const [estado, setEstado] = useState<string[]>([]);
-    const [abrangencia, setAbrangencia] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [indicadorVar, setIndicadorVar] = useState("");
+    const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Grafico);
+    /*const [estado, setEstado] = useState<string[]>([]);
+    const [ano, setAno] = useState<string[]>([]);
+    const [regiao, setRegiao] = useState<string[]>([]);*/
+    // const [isModalOpen, setIsModalOpen] = useState(false);
+    const [tituloGrafico, setTituloGrafico] = useState("");
     const [filtros, setFiltros] = useState({});
-    const [data, setData] = useState<{ [key: string]: number[] }>({});
+    const [data, setData] = useState<[string, number][]>([]);
     const [columns, setColumns] = useState<string[]>([]);
+    const [descricao, setDescricao] = useState("");
     const [mostrarVisualizacao, setMostrarVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Nenhuma);
 
-    const handleIndicador = useCallback((campo: string) => {
-        setIndicadorVar(campo);
-        const indicador = indicadores.find((i) => i.campo === campo);
-        if(indicador) {
-            setIndicador(indicador);
-        }
-    }, [setIndicador, setIndicadorVar]);
-
-    const salvar = useCallback(() => {
+    /*const salvar = useCallback(() => {
         setIsModalOpen(false);
-        setFiltros({ estado, abrangencia})
-    }, [setIsModalOpen, estado, abrangencia, setFiltros])
+        // setFiltros({ estado, ano, regiao});
+    }, [estado, ano, regiao])*/
 
-    const aplicarSelecao = useCallback(async () => {
+    const aplicarSelecao = useCallback(async (indicador_campo: string) => {
         fetch('https://bigdata-api.fiocruz.br/json_query', {
             method: 'POST',
             headers: {
@@ -45,7 +38,8 @@ export default function Dashboard() {
                 },
                 query: {
                     index: 'datasus-sinasc',
-                    columns: [indicadorVar],
+                    columns: [indicador_campo],
+                    text: 1,
                     filters: {
                         /*idade_obito_anos: [0],
                         res_SIGLA_UF: ['RJ'],*/
@@ -58,23 +52,32 @@ export default function Dashboard() {
             }
             const res = await response.json();
 
-            const arrays: { [key: string]: number[] } = {};
-            res.rows.forEach((row: [string, number]) => {
-                const [label, count] = row;
-                if (!arrays[label]) {
-                    arrays[label] = [];
-                }
-                arrays[label].push(count);
-            });
+            const rows = res.rows;
+            const cols = [res.columns.map((c: { name: string, type: string}) => c.name)[0], "TOTAL"];
+            const descricao = res.text_description;
 
-            const cols = res.columns.map((c: { name: string, type: string}) => c.name);
-
-            setData(arrays);
+            setData(rows);
             setColumns(cols);
+            setDescricao(descricao);
         })
         console.log({filtros, indicador: indicadorVar, visualizacao});
         setMostrarVisualizacao(visualizacao);
-    }, [filtros, indicadorVar, visualizacao, setMostrarVisualizacao, setData, setColumns]);
+    }, [filtros, indicadorVar, visualizacao]);
+
+    const handleIndicador = useCallback((campo: string) => {
+        setIndicadorVar(campo);
+        const indicadorSelecionado = indicadores.find((i) => i.campo === campo);
+        if(indicadorSelecionado) {
+            setIndicador(indicadorSelecionado);
+            setTituloGrafico(indicadorSelecionado.nome);
+        }
+        aplicarSelecao(campo);
+    }, [aplicarSelecao]);
+
+    const handleChangeVisualizacao = useCallback((value: string) => {
+        setVisualizacao(value as TipoVisualizacao);
+        setMostrarVisualizacao(value as TipoVisualizacao);
+    }, [])
 
     return (
         <>
@@ -86,7 +89,7 @@ export default function Dashboard() {
                 <Text>SISDEF</Text>
             </div>
             <div className="flex gap-3 m-3">
-                <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" accessKey="i">
+                <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" accessKey="i" enableClear={false}>
                     {
                         indicadores.map(({campo, nome}, index) => (
                             <SelectItem value={campo} key={index}>{nome}</SelectItem>
@@ -95,94 +98,34 @@ export default function Dashboard() {
                 </Select>
                 <Select
                     value={visualizacao}
-                    onValueChange={(value) => setVisualizacao(value as TipoVisualizacao)}
+                    onValueChange={handleChangeVisualizacao}
                     placeholder="Selecionar Tipo de Visualização"
                     className="max-w-72"
+                    enableClear={false}
                 >
-                    <SelectItem value={TipoVisualizacao.Textual}>Descrição Textual</SelectItem>
                     <SelectItem value={TipoVisualizacao.Tabela}>Tabela</SelectItem>
                     <SelectItem value={TipoVisualizacao.Grafico}>Gráfico</SelectItem>
                 </Select>
-                <Button className="focus:bg-tremor-brand-emphasis" onClick={() => setIsModalOpen(true)}>Selecionar Filtros</Button>
-                <ModalFiltros isOpen={isModalOpen} setIsOpen={setIsModalOpen}>
-                    <div className="flex flex-col items-start gap-2 grow">
-                        <label htmlFor="estado">UF: </label>
-                        <MultiSelect id="estado" value={estado} onValueChange={setEstado} placeholder="Selecionar UF" className="w-full max-w-sm">
-                            {
-                                ESTADOS_UF.map(({label, value}, i) => (
-                                    <MultiSelectItem value={value} key={i}>{label}</MultiSelectItem>
-                                ))
-                            }
-                        </MultiSelect>
-                    </div>
-                    <div className="basis-full h-0" />
-                    <div className="flex flex-col items-start gap-2 grow">
-                        <label htmlFor="abrangencia">Abrangência: </label>
-                        <Select id="abrangencia" value={abrangencia} onValueChange={setAbrangencia} placeholder="Selecionar Abrangencia" className="w-full max-w-sm">
-                            {
-                                [
-                                    {
-                                        label: "Total",
-                                        value: "0"
-                                    },
-                                    {
-                                        label: "Grandes Regiões",
-                                        value: "1"
-                                    },
-                                    {
-                                        label: "Unidades da Federação",
-                                        value: "2"
-                                    },
-                                    {
-                                        label: "Capitais",
-                                        value: "3"
-                                    },
-                                    {
-                                        label: "Situação urbano/rural",
-                                        value: "4"
-                                    },
-                                    {
-                                        label: "Sexo",
-                                        value: "5"
-                                    },
-                                    {
-                                        label: "Faixa de idade (18 anos ou mais)",
-                                        value: "6"
-                                    },
-                                    {
-                                        label: "Raça/Cor",
-                                        value: "7"
-                                    },
-                                    {
-                                        label: "Escolaridade",
-                                        value: "8"
-                                    },
-                                    {
-                                        label: "Rendimento domiciliar per capita",
-                                        value: "9"
-                                    }
-                                ].map(({label, value}, i) => (
-                                    <SelectItem value={value} key={i}>{label}</SelectItem>
-                                ))
-                            }
-                        </Select>
-                    </div>
-                    <div className="basis-full h-0" />
+                {/*<Button className="focus:bg-tremor-brand-emphasis" onClick={() => setIsModalOpen(true)}>Selecionar Filtros</Button>
+                <ModalFiltros isOpen={isModalOpen} setIsOpen={setIsModalOpen} estado={estado} setEstado={setEstado} ano={ano} setAno={setAno} regiao={regiao} setRegiao={setRegiao}>
                     <div className="flex justify-end w-full">
                         <Button className="focus:bg-tremor-brand-emphasis" onClick={() => salvar()}>Salvar</Button>
                     </div>
-                </ModalFiltros>
-                <Button className="focus:bg-tremor-brand-emphasis" onClick={() => aplicarSelecao()}>Aplicar Seleções</Button>
+                </ModalFiltros>*/}
+                {/*<Button className="focus:bg-tremor-brand-emphasis" onClick={() => aplicarSelecao()}>Aplicar Seleções</Button>*/}
             </div>
             <div className="flex mt-10 items-center justify-center w-full">
                 <div className="w-1/2">
                     {
-                        mostrarVisualizacao === TipoVisualizacao.Grafico && <BarChartHero data={data} title={indicador?.nome ?? "Indicador"} xAxisLabel={indicador?.campo ?? "eixo x"} />
+                        mostrarVisualizacao === TipoVisualizacao.Grafico && <BarChartHero data={data} title={tituloGrafico} xAxisLabel={indicador?.campo ?? "eixo x"} />
                     }
                     {
-                        mostrarVisualizacao === TipoVisualizacao.Tabela && <TableA11y data={data} columns={columns} title={indicador?.nome ?? "Indicador"} />
+                        mostrarVisualizacao === TipoVisualizacao.Tabela && <TableA11y data={data} columns={columns} title={tituloGrafico} />
                     }
                 </div>
+            </div>
+            <div className="flex mt-10 items-center justify-center w-full">
+                <p>{descricao}</p>
             </div>
         </>
     );

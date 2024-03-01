@@ -1,5 +1,4 @@
-import {BarChart} from '@tremor/react';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import * as Highcharts from 'highcharts'
 import HighchartsExporting from 'highcharts/modules/exporting'
 import HighchartsReact from 'highcharts-react-official'
@@ -7,13 +6,14 @@ import HighchartsReact from 'highcharts-react-official'
 if (typeof Highcharts === 'object') {
     HighchartsExporting(Highcharts);
     require('highcharts/modules/accessibility')(Highcharts);
+    require('highcharts/modules/pattern-fill')(Highcharts);
 }
 
 const dataFormatter = (number: number) =>
     Intl.NumberFormat('pt').format(number).toString();
 
 interface BarChartProps extends HighchartsReact.Props {
-    data: { [key: string]: number[] },
+    data: [string, number][],
     title: string;
     xAxisLabel: string;
 }
@@ -23,33 +23,35 @@ export const BarChartHero = ({data, title, xAxisLabel, ...props}: BarChartProps)
     const [options, setOptions] = useState({
         chart: {
             type: 'column',
-        },
-        title: {
-            text: title,
-            widthAdjust: -100,
-            useHTML: true
         }
     });
 
     const formattedChartData = useMemo(() => {
-        const series = Object.entries(data).map(([k, v]) => {
-            return {
-                name: k,
-                data: v,
-            }
-        })
+        const series = data.map(([header, value], index) => ({
+            name: header,
+            data: [value],
+            color: {patternIndex: index}
+        }));
+
+        console.log(series);
 
         return [{categories: [xAxisLabel]}, series];
     }, [data, xAxisLabel])
 
     useEffect(() => {
         const [xAxis, series] = formattedChartData;
+        //@ts-ignore
         setOptions((prev) => ({
             ...prev,
             xAxis,
-            series
+            series,
+            title: {
+                text: title,
+                widthAdjust: -100,
+                useHTML: true
+            }
         }))
-    }, [formattedChartData, setOptions])
+    }, [formattedChartData, title])
 
     return (
         <>
