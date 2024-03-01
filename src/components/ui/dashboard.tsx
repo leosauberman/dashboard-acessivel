@@ -69,7 +69,6 @@ export default function Dashboard() {
         const indicadorSelecionado = indicadores.find((i) => i.campo === campo);
         if(indicadorSelecionado) {
             setIndicador(indicadorSelecionado);
-            setTituloGrafico(indicadorSelecionado.nome);
             // aplicarSelecao(indicadorSelecionado);
         }
     }, []);
@@ -80,7 +79,10 @@ export default function Dashboard() {
     }, [])
 
     useEffect(() => {
-        aplicarSelecao(indicador).then(() => setMostrarVisualizacao(TipoVisualizacao.Grafico));
+        aplicarSelecao(indicador).then(() => {
+            setTituloGrafico(indicador.nome);
+            setMostrarVisualizacao(TipoVisualizacao.Grafico)
+        });
     }, [aplicarSelecao, indicador])
 
     return (
