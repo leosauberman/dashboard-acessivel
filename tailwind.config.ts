@@ -1,4 +1,5 @@
 import colors from "tailwindcss/colors";
+const { parkwindPlugin } = require('@park-ui/tailwind-plugin')
 
 const config = {
     darkMode: ["class"],
@@ -33,7 +34,7 @@ const config = {
                         inverted: colors.white,
                     },
                     background: {
-                        muted: colors.gray[50],
+                        muted: colors.gray[200],
                         subtle: colors.gray[100],
                         DEFAULT: colors.white,
                         emphasis: colors.gray[700],
@@ -149,7 +150,7 @@ const config = {
                 /^(fill-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
         },
     ],
-    plugins: [require('@headlessui/tailwindcss'), require('@tailwindcss/forms'), require("tailwindcss-animate")],
+    plugins: [require('@headlessui/tailwindcss'), require('@tailwindcss/forms'), require("tailwindcss-animate"), parkwindPlugin],
 }
 
 export default config

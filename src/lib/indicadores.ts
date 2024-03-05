@@ -4,6 +4,7 @@ export interface Indicador {
     filtros: any[];
     tabela: string;
     descricao: string;
+    eixo_x: string;
 }
 
 export const indicadores: Indicador[] = [
@@ -12,6 +13,7 @@ export const indicadores: Indicador[] = [
         campo: "def_anomalia",
         filtros: [],
         tabela: "datasus-sinasc",
+        eixo_x: "Anomalia",
         descricao: "Proporção de nascidos vivos com anomalia congênita, de acordo com o Capitulo XVII da Classificação Internacional de Doenças (CID), códigos 254-266, em relação ao total de nascidos vivos.",
     },
     {
@@ -19,6 +21,7 @@ export const indicadores: Indicador[] = [
         campo: "def_sexo",
         filtros: [{IDANOMAL: 1}],
         tabela: "datasus-sinasc",
+        eixo_x: "Sexo",
         descricao: "Distribuição percentual dos nascidos vivos com alguma anomalia congênita (de acordo com o Capitulo XVII da Classificação Internacional de Doenças (CID), códigos 254-266), por sexo (masculino; feminino; ignorado)."
     },
     {
@@ -26,6 +29,7 @@ export const indicadores: Indicador[] = [
         campo: "def_raca_cor",
         filtros: [{IDANOMAL: 1}],
         tabela: "datasus-sinasc",
+        eixo_x: "Raça / Cor",
         descricao: "Proporção de nascidos vivos com anomalia congênita, de acordo com o Capitulo XVII da Classificação Internacional de Doenças (CID), códigos 254-266, em relação ao total de nascidos vivos."
     },
     {
@@ -33,6 +37,7 @@ export const indicadores: Indicador[] = [
         campo: "def_escol_mae",
         filtros: [{IDANOMAL: 1}],
         tabela: "datasus-sinasc",
+        eixo_x: "Escolaridade da Mãe",
         descricao: "Distribuição percentual dos nascidos vivos com alguma anomalia congênita (de acordo com o Capitulo XVII da Classificação Internacional de Doenças (CID), códigos 254-266), por escolaridade da mãe (Nenhuma; de 1 a 3 anos; de 4 a 7 anos; 8 a 11 anos; 12 anos e mais; Ignorado)."
     },
     {
@@ -40,6 +45,7 @@ export const indicadores: Indicador[] = [
         campo: "def_consultas",
         filtros: [{IDANOMAL: 1}],
         tabela: "datasus-sinasc",
+        eixo_x: "Consultas de Pré-Natal",
         descricao: "Distribuição percentual dos nascidos vivos com alguma anomalia congênita (de acordo com o Capitulo XVII da Classificação Internacional de Doenças (CID), códigos 254-266), por número de consultas de pré-natal realizadas pela mãe (1: Nenhuma; 2: de 1 a 3; 3: de 4 a 6; 4: 7 e mais; 9: Ignorado)."
     },
 ]

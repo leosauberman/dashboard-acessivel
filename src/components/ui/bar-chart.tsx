@@ -2,11 +2,13 @@ import React, {useEffect, useMemo, useRef, useState} from 'react'
 import * as Highcharts from 'highcharts'
 import HighchartsExporting from 'highcharts/modules/exporting'
 import HighchartsReact from 'highcharts-react-official'
+import {EstiloGrafico, LanguageOptions} from "@/lib/utils";
 
 if (typeof Highcharts === 'object') {
     HighchartsExporting(Highcharts);
     require('highcharts/modules/accessibility')(Highcharts);
     require('highcharts/modules/pattern-fill')(Highcharts);
+    require('highcharts/themes/high-contrast-light')(Highcharts);
 }
 
 const dataFormatter = (number: number) =>
@@ -16,13 +18,23 @@ interface BarChartProps extends HighchartsReact.Props {
     data: [string, number][],
     title: string;
     xAxisLabel: string;
+    estiloGrafico: EstiloGrafico;
 }
 
-export const BarChartHero = ({data, title, xAxisLabel, ...props}: BarChartProps) => {
+export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, ...props}: BarChartProps) => {
     const chartComponentRef = useRef<HighchartsReact.RefObject | null>(null);
     const [options, setOptions] = useState({
         chart: {
             type: 'column',
+        },
+        lang: LanguageOptions,
+        yAxis: {
+            labels: {
+                format: "{value}%",
+            },
+            title: {
+                text: "Porcentagem"
+            }
         }
     });
 
@@ -30,13 +42,26 @@ export const BarChartHero = ({data, title, xAxisLabel, ...props}: BarChartProps)
         const series = data.map(([header, value], index) => ({
             name: header,
             data: [value],
-            color: {patternIndex: index}
+            color: estiloGrafico === EstiloGrafico.Padroes ? {patternIndex: index} : null,
+            dataLabels: {
+                enabled: true,
+                align: 'center',
+                inside: false,
+                verticalAlign: 'middle',
+                format: '{y:.1f}%',
+                style: {
+                    fontWeight: 'bold',
+                    color: 'black'
+                }
+            },
+            tooltip: {
+                valueSuffix: "%",
+                valueDecimals: "1"
+            }
         }));
 
-        console.log(series);
-
         return [{categories: [xAxisLabel]}, series];
-    }, [data, xAxisLabel])
+    }, [data, xAxisLabel, estiloGrafico])
 
     useEffect(() => {
         const [xAxis, series] = formattedChartData;
