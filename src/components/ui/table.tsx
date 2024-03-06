@@ -26,7 +26,7 @@ export const TableA11y = ({data, columns, title}: TableA11yProps) => {
                             data.map(([k, v], i) => (
                                 <TableRow key={i}>
                                     <TableCell className="font-bold" tabIndex={0}>{k}</TableCell>
-                                    <TableCell tabIndex={0}>{Intl.NumberFormat('pt-BR').format(v)}</TableCell>
+                                    <TableCell tabIndex={0}>{Intl.NumberFormat('pt-BR').format(v)}%</TableCell>
                                 </TableRow>
                             ))
                         }
