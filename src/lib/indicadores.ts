@@ -13,7 +13,7 @@ export const indicadores: Indicador[] = [
         campo: "def_anomalia",
         filtros: [],
         tabela: "datasus-sinasc",
-        eixo_x: "Anomalia",
+        eixo_x: "Anomalia congênita",
         descricao: "Proporção de nascidos vivos com anomalia congênita, de acordo com o Capitulo XVII da Classificação Internacional de Doenças (CID), códigos 254-266, em relação ao total de nascidos vivos.",
     },
     {

@@ -21,6 +21,9 @@ const config = {
                 "2xl": "1400px",
             },
         },
+        data: {
+          checked: 'state="checked"'
+        },
         extend: {
             colors: {
                 // light mode
@@ -83,6 +86,13 @@ const config = {
                         inverted: colors.gray[950],
                     },
                 },
+                nippis: {
+                    brand: {
+                        1: "#054e7a",
+                        2: "#3b99e5"
+                    },
+                    red: "#851626"
+                }
             },
             boxShadow: {
                 // light

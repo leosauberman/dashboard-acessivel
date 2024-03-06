@@ -62,7 +62,7 @@ export default function Dashboard() {
             const res = await response.json();
 
             const rows = res.rows;
-            const cols = [res.columns.map((c: { name: string, type: string}) => c.name)[0], "TOTAL"];
+            const cols = [indicador.eixo_x, "TOTAL"];
             const descricao = res.text_description;
 
             setData(rows);
@@ -71,7 +71,7 @@ export default function Dashboard() {
         })
         console.log({filtros, indicador: indicadorVar, visualizacao});
         setMostrarVisualizacao(visualizacao);
-    }, [filtros, indicadorVar, visualizacao]);
+    }, [filtros, indicadorVar, indicador, visualizacao]);
 
     const handleIndicador = useCallback((campo: string) => {
         setIndicadorVar(campo);
@@ -122,8 +122,8 @@ export default function Dashboard() {
                 </div>
                 <Text>SISDEF</Text>
             </div>
-            <div className="flex gap-3 m-3">
-                <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" ref={indicadorRef} enableClear={false}>
+            <div className="flex gap-3 m-3 items-end">
+                <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" ref={indicadorRef} enableClear={false} className="max-w-4xl">
                     {
                         indicadores.map(({campo, nome}, index) => (
                             <SelectItem value={campo} key={index}>{nome}</SelectItem>
@@ -131,24 +131,37 @@ export default function Dashboard() {
                     }
                 </Select>
 
-                <RadioButtonGroup.Root value={visualizacao} className="max-w-48 w-full" onValueChange={handleChangeVisualizacao} ref={visualizacaoRef}>
-                    {tiposVisualizacao.map((option, id) => (
-                        <RadioButtonGroup.Item key={id} value={option.value}>
-                            <RadioButtonGroup.ItemControl />
-                            <RadioButtonGroup.ItemText>{option.label}</RadioButtonGroup.ItemText>
-                        </RadioButtonGroup.Item>
-                    ))}
-                </RadioButtonGroup.Root>
-
-                <RadioButtonGroup.Root value={estiloGrafico} className="max-w-48 w-full" onValueChange={({value}) => setEstiloGrafico(value as EstiloGrafico)} ref={estiloRef}>
-                    {estilos.map((option, id) => (
-                        <RadioButtonGroup.Item key={id} value={option.value}>
-                            <RadioButtonGroup.ItemControl />
-                            <RadioButtonGroup.ItemText>{option.label}</RadioButtonGroup.ItemText>
-                        </RadioButtonGroup.Item>
-                    ))}
-                </RadioButtonGroup.Root>
-
+                <div>
+                    <span className="text-xs text-tremor-content-emphasis">Tipo de Visualização: </span>
+                    <RadioButtonGroup.Root value={visualizacao} className="max-w-48 w-full gap-2" onValueChange={handleChangeVisualizacao} ref={visualizacaoRef}>
+                        {tiposVisualizacao.map((option, id) => (
+                            <RadioButtonGroup.Item
+                                key={id} value={option.value}
+                                className="group data-checked:bg-nippis-brand-1 data-checked:border-nippis-brand-1
+                                        data-checked:hover:bg-nippis-brand-2 data-checked:hover:border-nippis-brand-2
+                                        data-[focus]:ring-2 focus:border-tremor-brand-subtle focus:ring-tremor-brand-muted"
+                                >
+                                <RadioButtonGroup.ItemControl />
+                                <RadioButtonGroup.ItemText>{option.label}</RadioButtonGroup.ItemText>
+                            </RadioButtonGroup.Item>
+                        ))}
+                    </RadioButtonGroup.Root>
+                </div>
+                <div>
+                    <span className="text-xs text-tremor-content-emphasis">Habilitar/Desabilitar padrões: </span>
+                    <RadioButtonGroup.Root value={estiloGrafico} className="max-w-48 w-full gap-2" onValueChange={({value}) => setEstiloGrafico(value as EstiloGrafico)} ref={estiloRef}>
+                        {estilos.map((option, id) => (
+                            <RadioButtonGroup.Item
+                                key={id} value={option.value}
+                                className="group data-checked:bg-nippis-brand-1 data-checked:border-nippis-brand-1
+                                        data-checked:hover:bg-nippis-brand-2 data-checked:hover:border-nippis-brand-2
+                                        data-[focus]:ring-2 focus:border-tremor-brand-subtle focus:ring-tremor-brand-muted">
+                                <RadioButtonGroup.ItemControl />
+                                <RadioButtonGroup.ItemText>{option.label}</RadioButtonGroup.ItemText>
+                            </RadioButtonGroup.Item>
+                        ))}
+                    </RadioButtonGroup.Root>
+                </div>
                 {/*<Button className="focus:bg-tremor-brand-emphasis" onClick={() => setIsModalOpen(true)}>Selecionar Filtros</Button>
                 <ModalFiltros isOpen={isModalOpen} setIsOpen={setIsModalOpen} estado={estado} setEstado={setEstado} ano={ano} setAno={setAno} regiao={regiao} setRegiao={setRegiao}>
                     <div className="flex justify-end w-full">
