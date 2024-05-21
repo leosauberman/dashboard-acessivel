@@ -1,26 +1,35 @@
-import {Select, SelectItem, Text, Title,} from "@tremor/react";
-import {useCallback, useEffect, useRef, useState} from "react";
+import {Button, Select, SelectItem, Text, Title,} from "@tremor/react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {BarChartHero} from "@/components/ui/bar-chart";
-import {Indicador, indicadores} from "@/lib/indicadores";
+import {BaseIndicadorEnum, Indicador, indicadores} from "@/lib/indicadores";
 import {EstiloGrafico, TipoVisualizacao} from "@/lib/utils";
 import {TableA11y} from "@/components/ui/table";
 import * as RadioButtonGroup from '@/components/ui/radio-button-group';
 import {ValueChangeDetails} from "@zag-js/radio-group";
+import {Spinner} from "@/components/ui/spinner/spinner";
+import {Filter} from "lucide-react";
+import ModalFiltros from "@/components/ui/modal-filtros";
+import {AudioPlayer} from "@/components/ui/audio-player";
 
 export default function Dashboard() {
-    const [indicador, setIndicador] = useState<Indicador>(indicadores[0]);
-    const [indicadorVar, setIndicadorVar] = useState(indicador.campo);
+    const [isLoading, setIsLoading] = useState(false);
+    const [baseIndicador, setBaseIndicador] = useState(BaseIndicadorEnum.SINASC);
+    const indicadoresFiltrados = useMemo(() => indicadores.filter((i) => i.id.startsWith(baseIndicador)), [baseIndicador]);
+    const [indicador, setIndicador] = useState<Indicador>(indicadoresFiltrados[0]);
+    const [indicadorVar, setIndicadorVar] = useState(indicador.id);
     const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Grafico);
     const [estiloGrafico, setEstiloGrafico] = useState<EstiloGrafico>(EstiloGrafico.Cores);
-    /*const [estado, setEstado] = useState<string[]>([]);
-    const [ano, setAno] = useState<string[]>([]);
+    const [estado, setEstado] = useState<string[]>([]);
+    /*const [ano, setAno] = useState<string[]>([]);
     const [regiao, setRegiao] = useState<string[]>([]);*/
-    // const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [tituloGrafico, setTituloGrafico] = useState("");
     const [filtros, setFiltros] = useState({});
     const [data, setData] = useState<[string, number][]>([]);
+    const [tableColumns, setTableColumns] = useState<string[]>([]);
     const [columns, setColumns] = useState<string[]>([]);
     const [descricao, setDescricao] = useState("");
+    const [audio, setAudio] = useState("");
     const [mostrarVisualizacao, setMostrarVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Nenhuma);
     const indicadorRef = useRef(null);
     const visualizacaoRef = useRef(null);
@@ -29,12 +38,19 @@ export default function Dashboard() {
     const tiposVisualizacao: {value: TipoVisualizacao, label: string}[] = [{ value: TipoVisualizacao.Grafico, label: "Gráfico" }, { value: TipoVisualizacao.Tabela, label: "Tabela"}]
     const estilos: {value:EstiloGrafico, label: string}[] = [{ value: EstiloGrafico.Cores, label: "Cores" }, { value: EstiloGrafico.Padroes, label: "Padrões"}]
 
-    /*const salvar = useCallback(() => {
+    const salvar = useCallback(() => {
         setIsModalOpen(false);
-        // setFiltros({ estado, ano, regiao});
-    }, [estado, ano, regiao])*/
+        if(baseIndicador === BaseIndicadorEnum.BPC) {
+            setFiltros({ sigla_uf: estado });
+        }
+        else {
+            setFiltros({ res_SIGLA_UF: estado });
+        }
+        indicadorChanged.current = true;
+    }, [estado, baseIndicador])
 
     const aplicarSelecao = useCallback(async (indicadorSelecionado: Indicador) => {
+        setIsLoading(true);
         fetch('https://bigdata-api.fiocruz.br/json_query', {
             method: 'POST',
             headers: {
@@ -46,16 +62,19 @@ export default function Dashboard() {
                     token: process.env.NEXT_PUBLIC_TOKEN
                 },
                 query: {
-                    index: 'datasus-sinasc',
-                    columns: [indicadorSelecionado.campo],
+                    index: indicadorSelecionado.tabela,
+                    columns: [...indicadorSelecionado.campo],
                     text: 1,
+                    audio: 1,
                     filters: {
+                        ...filtros
                         /*idade_obito_anos: [0],
                         res_SIGLA_UF: ['RJ'],*/
                     }
                 }
             })
         }).then(async response => {
+            setIsLoading(false);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -66,21 +85,33 @@ export default function Dashboard() {
             const descricao = res.text_description;
 
             setData(rows);
-            setColumns(cols);
+            setTableColumns(cols);
+            setColumns(res.columns);
             setDescricao(descricao);
-        })
+            setAudio(res.audio);
+        }).catch((err) => {
+            console.log("ERRO: ", err);
+            setIsLoading(false);
+            if(confirm("Erro ao realizar a requisição. Recarregar a página?")){
+                window.location.reload();
+            }
+        });
         console.log({filtros, indicador: indicadorVar, visualizacao});
         setMostrarVisualizacao(visualizacao);
     }, [filtros, indicadorVar, indicador, visualizacao]);
 
-    const handleIndicador = useCallback((campo: string) => {
-        setIndicadorVar(campo);
+    const handleIndicador = useCallback((id: string) => {
+        setIndicadorVar(id);
         indicadorChanged.current = true;
-        const indicadorSelecionado = indicadores.find((i) => i.campo === campo);
+        const indicadorSelecionado = indicadoresFiltrados.find((i) => i.id === id);
         if(indicadorSelecionado) {
             setIndicador(indicadorSelecionado);
         }
-    }, []);
+    }, [indicadoresFiltrados]);
+
+    const handleChangeBase = useCallback((value: string) => {
+        setBaseIndicador(value as BaseIndicadorEnum);
+    }, [])
 
     const handleChangeVisualizacao = useCallback(({value}: ValueChangeDetails) => {
         setVisualizacao(value as TipoVisualizacao);
@@ -123,13 +154,27 @@ export default function Dashboard() {
                 <Text>SISDEF</Text>
             </div>
             <div className="flex gap-3 m-3 items-end">
-                <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" ref={indicadorRef} enableClear={false} className="max-w-4xl">
-                    {
-                        indicadores.map(({campo, nome}, index) => (
-                            <SelectItem value={campo} key={index}>{nome}</SelectItem>
-                        ))
-                    }
-                </Select>
+                <div>
+                    <span className="text-xs text-tremor-content-emphasis">Base: </span>
+                    <Select value={baseIndicador} onValueChange={handleChangeBase} placeholder="Selecionar Base" ref={indicadorRef} enableClear={false} className="max-w-xs">
+                        {
+                            Object.entries(BaseIndicadorEnum).map(([key, val], index) => (
+                                <SelectItem value={val} key={index}>{key}</SelectItem>
+                            ))
+                        }
+                    </Select>
+                </div>
+
+                <div>
+                    <span className="text-xs text-tremor-content-emphasis">Indicador: </span>
+                    <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" ref={indicadorRef} enableClear={false} className="max-w-2xl min-w-[32rem]">
+                        {
+                            indicadoresFiltrados.map(({id, nome}, index) => (
+                                <SelectItem value={id} key={index}>{nome}</SelectItem>
+                            ))
+                        }
+                    </Select>
+                </div>
 
                 <div>
                     <span className="text-xs text-tremor-content-emphasis">Tipo de Visualização: </span>
@@ -162,25 +207,42 @@ export default function Dashboard() {
                         ))}
                     </RadioButtonGroup.Root>
                 </div>
-                {/*<Button className="focus:bg-tremor-brand-emphasis" onClick={() => setIsModalOpen(true)}>Selecionar Filtros</Button>
-                <ModalFiltros isOpen={isModalOpen} setIsOpen={setIsModalOpen} estado={estado} setEstado={setEstado} ano={ano} setAno={setAno} regiao={regiao} setRegiao={setRegiao}>
+                <div className="flex flex-col gap-1 items-center justify-between">
+                    <span className="text-xs text-tremor-content-emphasis">Filtros: </span>
+                    <button onClick={() => setIsModalOpen(true)}>
+                        <Filter size={36} color="#054e7a" />
+                    </button>
+                </div>
+                <ModalFiltros isOpen={isModalOpen} setIsOpen={setIsModalOpen} estado={estado} setEstado={setEstado}>
                     <div className="flex justify-end w-full">
                         <Button className="focus:bg-tremor-brand-emphasis" onClick={() => salvar()}>Salvar</Button>
                     </div>
-                </ModalFiltros>*/}
-                {/*<Button className="focus:bg-tremor-brand-emphasis" onClick={() => aplicarSelecao()}>Aplicar Seleções</Button>*/}
+                </ModalFiltros>
             </div>
-            <figure className="flex flex-col mt-10 items-center justify-center w-full">
-                <div className="w-1/2">
-                    {
-                        mostrarVisualizacao === TipoVisualizacao.Grafico && <BarChartHero data={data} title={tituloGrafico} xAxisLabel={indicador.eixo_x} estiloGrafico={estiloGrafico} />
-                    }
-                    {
-                        mostrarVisualizacao === TipoVisualizacao.Tabela && <TableA11y data={data} columns={columns} title={tituloGrafico} />
-                    }
-                </div>
-                <p className="highcharts-description flex mt-10 items-center justify-center w-full">{descricao}</p>
-            </figure>
+            <div aria-relevant="additions removals" aria-live="polite">
+            {
+                isLoading
+                    ? (
+                        <div className="flex h-40 w-full items-center justify-center">
+                            <Spinner />
+                        </div>
+                    )
+                    : (<figure className="flex flex-col mt-10 items-center justify-center w-full">
+                        <div className="w-1/2">
+                            {
+                                mostrarVisualizacao === TipoVisualizacao.Grafico && <BarChartHero data={data} columns={columns} title={tituloGrafico} xAxisLabel={indicador.eixo_x} estiloGrafico={estiloGrafico} />
+                            }
+                            {
+                                mostrarVisualizacao === TipoVisualizacao.Tabela && <TableA11y data={data} columns={tableColumns} title={tituloGrafico} />
+                            }
+                        </div>
+                        <div className="">
+                            <AudioPlayer audioBase64={audio} />
+                            <p className="highcharts-description flex mt-10 items-center justify-center w-full">{descricao}</p>
+                        </div>
+                    </figure>)
+            }
+            </div>
         </>
     );
 }

@@ -16,12 +16,13 @@ const dataFormatter = (number: number) =>
 
 interface BarChartProps extends HighchartsReact.Props {
     data: [string, number][],
+    columns: string[],
     title: string;
     xAxisLabel: string;
     estiloGrafico: EstiloGrafico;
 }
 
-export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, ...props}: BarChartProps) => {
+export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, columns, ...props}: BarChartProps) => {
     const chartComponentRef = useRef<HighchartsReact.RefObject | null>(null);
     const [options, setOptions] = useState({
         chart: {
@@ -74,6 +75,11 @@ export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, ...props}:
                 text: title,
                 widthAdjust: -100,
                 useHTML: true
+            },
+            plotOptions: {
+                column: {
+                    stacking: columns.length > 2 ? "percent" : undefined
+                }
             }
         }))
     }, [formattedChartData, title])

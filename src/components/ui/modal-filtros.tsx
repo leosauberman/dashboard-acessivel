@@ -9,21 +9,17 @@ interface ModalFiltrosProps {
     setIsOpen: (val: boolean) => void;
     estado: string[],
     setEstado: (val: string[]) => void;
-    ano: string[];
-    setAno: (val: string[]) => void;
-    regiao: string[];
-    setRegiao: (val: string[]) => void;
 }
 
-export const ModalFiltros = ({isOpen, setIsOpen, children, ano, setAno, estado, setEstado, regiao, setRegiao}: PropsWithChildren<ModalFiltrosProps>) => (
+export const ModalFiltros = ({isOpen, setIsOpen, children, estado, setEstado}: PropsWithChildren<ModalFiltrosProps>) => (
     <Dialog open={isOpen} onClose={() => setIsOpen(false)}>
-        <DialogPanel className="min-w-96 min-h-96">
+        <DialogPanel className="min-w-96 min-h-72">
             <div className="flex justify-between items-center">
                 <Title>Filtros</Title>
                 <button onClick={() => setIsOpen(false)}><X color="black" /></button>
             </div>
             <div className="flex flex-wrap gap-4">
-                <div className="flex flex-col items-start gap-2 grow">
+                {/*<div className="flex flex-col items-start gap-2 grow">
                     <label htmlFor="anos">Ano: </label>
                     <MultiSelect id="anos" value={ano} onValueChange={(value) => setAno(value)} placeholder="Selecionar Ano" className="w-full max-w-sm">
                         {
@@ -43,11 +39,14 @@ export const ModalFiltros = ({isOpen, setIsOpen, children, ano, setAno, estado, 
                             ))
                         }
                     </MultiSelect>
-                </div>
+                </div>*/}
                 <div className="basis-full h-0" />
                 <div className="flex flex-col items-start gap-2 grow">
                     <label htmlFor="estado">UF: </label>
-                    <MultiSelect id="estado" value={estado} onValueChange={(value) => setEstado(value)} placeholder="Selecionar UF" className="w-full max-w-sm">
+                    <MultiSelect id="estado" value={estado} onValueChange={(value) => {
+                        setEstado(value);
+                        console.log(value);
+                    }} placeholder="Selecionar UF" className="w-full max-w-sm">
                         {
                             ESTADOS_UF.map(({label, value}, i) => (
                                 <MultiSelectItem value={value} key={i}>{label}</MultiSelectItem>
