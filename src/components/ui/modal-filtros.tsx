@@ -13,7 +13,7 @@ interface ModalFiltrosProps {
 
 export const ModalFiltros = ({isOpen, setIsOpen, children, estado, setEstado}: PropsWithChildren<ModalFiltrosProps>) => (
     <Dialog open={isOpen} onClose={() => setIsOpen(false)}>
-        <DialogPanel className="min-w-96 min-h-72">
+        <DialogPanel className="min-w-96 min-h-96">
             <div className="flex justify-between items-center">
                 <Title>Filtros</Title>
                 <button onClick={() => setIsOpen(false)}><X color="black" /></button>
@@ -43,10 +43,7 @@ export const ModalFiltros = ({isOpen, setIsOpen, children, estado, setEstado}: P
                 <div className="basis-full h-0" />
                 <div className="flex flex-col items-start gap-2 grow">
                     <label htmlFor="estado">UF: </label>
-                    <MultiSelect id="estado" value={estado} onValueChange={(value) => {
-                        setEstado(value);
-                        console.log(value);
-                    }} placeholder="Selecionar UF" className="w-full max-w-sm">
+                    <MultiSelect id="estado" value={estado} onValueChange={(value) => setEstado(value)} placeholder="Selecionar UF" className="w-full max-w-sm">
                         {
                             ESTADOS_UF.map(({label, value}, i) => (
                                 <MultiSelectItem value={value} key={i}>{label}</MultiSelectItem>

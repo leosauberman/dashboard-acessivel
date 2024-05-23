@@ -13,12 +13,14 @@ export const AudioPlayer = ({audioBase64}: {audioBase64: string}) => {
             return new Blob([byteArray], { type: mime });
         }
 
-        const mimeType = 'audio/wav';
-        const base64Data = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
-        const audioBlob = base64ToBlob(base64Data, mimeType);
-        const audioPlayer: HTMLAudioElement = document.getElementById('audioPlayer') as HTMLAudioElement;
-        if(audioPlayer) {
-            audioPlayer.src = URL.createObjectURL(audioBlob);
+        if(audioBase64) {
+            const mimeType = 'audio/wav';
+            const base64Data = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
+            const audioBlob = base64ToBlob(base64Data, mimeType);
+            const audioPlayer: HTMLAudioElement = document.getElementById('audioPlayer') as HTMLAudioElement;
+            if(audioPlayer) {
+                audioPlayer.src = URL.createObjectURL(audioBlob);
+            }
         }
     }, [audioBase64])
 

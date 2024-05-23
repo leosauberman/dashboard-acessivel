@@ -25,8 +25,10 @@ export default function Dashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tituloGrafico, setTituloGrafico] = useState("");
     const [filtros, setFiltros] = useState({});
-    const [data, setData] = useState<[string, number][]>([]);
+    const [data, setData] = useState<[string, number[]][]>([]);
+    const [xAxis, setXAxis] = useState<string[]>([])
     const [tableColumns, setTableColumns] = useState<string[]>([]);
+    const [totalRegistros, setTotalRegistros] = useState<number>(0);
     const [columns, setColumns] = useState<string[]>([]);
     const [descricao, setDescricao] = useState("");
     const [audio, setAudio] = useState("");
@@ -37,20 +39,23 @@ export default function Dashboard() {
     const indicadorChanged = useRef(true);
     const tiposVisualizacao: {value: TipoVisualizacao, label: string}[] = [{ value: TipoVisualizacao.Grafico, label: "Gráfico" }, { value: TipoVisualizacao.Tabela, label: "Tabela"}]
     const estilos: {value:EstiloGrafico, label: string}[] = [{ value: EstiloGrafico.Cores, label: "Cores" }, { value: EstiloGrafico.Padroes, label: "Padrões"}]
-
     const salvar = useCallback(() => {
         setIsModalOpen(false);
-        if(baseIndicador === BaseIndicadorEnum.BPC) {
-            setFiltros({ sigla_uf: estado });
-        }
-        else {
-            setFiltros({ res_SIGLA_UF: estado });
+        if(estado){
+            if(baseIndicador === BaseIndicadorEnum.BPC) {
+                setFiltros({ sigla_uf: estado });
+            }
+            else {
+                setFiltros({ res_SIGLA_UF: estado });
+            }
         }
         indicadorChanged.current = true;
     }, [estado, baseIndicador])
 
     const aplicarSelecao = useCallback(async (indicadorSelecionado: Indicador) => {
         setIsLoading(true);
+        const filters = indicadorSelecionado.filtros.reduce((prev, curr) => ({...prev, ...curr}), {...filtros});
+
         fetch('https://bigdata-api.fiocruz.br/json_query', {
             method: 'POST',
             headers: {
@@ -66,11 +71,7 @@ export default function Dashboard() {
                     columns: [...indicadorSelecionado.campo],
                     text: 1,
                     audio: 1,
-                    filters: {
-                        ...filtros
-                        /*idade_obito_anos: [0],
-                        res_SIGLA_UF: ['RJ'],*/
-                    }
+                    filters,
                 }
             })
         }).then(async response => {
@@ -80,15 +81,36 @@ export default function Dashboard() {
             }
             const res = await response.json();
 
-            const rows = res.rows;
-            const cols = [indicador.eixo_x, "TOTAL"];
             const descricao = res.text_description;
 
+            let rows: Array<[string, number[]]>;
+            let eixoX: string[];
+            let cols: string[];
+
+            if(res.columns.length > 2) {
+                let filteredRows: [string, number][] = res.rows.map((r: any[]) => r.slice(1));
+                const tempHashMap = new Map<string, number[]>();
+                filteredRows.forEach(([k, v]) => {
+                    if(!tempHashMap.has(k)) tempHashMap.set(k, []);
+                    tempHashMap.get(k)!.push(v);
+                });
+                rows = Array.from(tempHashMap.entries());
+                eixoX = Array.from(new Set(res.rows.map((r: any[]) => r[0])));
+                cols = [...eixoX, "TOTAL"];
+            }
+            else {
+                rows = res.rows; //tratar pra ser [value]
+                eixoX = [indicador.eixo_x];
+                cols = [...eixoX, "TOTAL"];
+            }
+
             setData(rows);
+            setXAxis(eixoX);
             setTableColumns(cols);
             setColumns(res.columns);
             setDescricao(descricao);
             setAudio(res.audio);
+            setTotalRegistros(res.total);
         }).catch((err) => {
             console.log("ERRO: ", err);
             setIsLoading(false);
@@ -96,7 +118,7 @@ export default function Dashboard() {
                 window.location.reload();
             }
         });
-        console.log({filtros, indicador: indicadorVar, visualizacao});
+        console.log({filters, indicador: indicadorVar, visualizacao});
         setMostrarVisualizacao(visualizacao);
     }, [filtros, indicadorVar, indicador, visualizacao]);
 
@@ -153,7 +175,7 @@ export default function Dashboard() {
                 </div>
                 <Text>SISDEF</Text>
             </div>
-            <div className="flex gap-3 m-3 items-end">
+            <div className="flex flex-wrap gap-3 m-3 items-end">
                 <div>
                     <span className="text-xs text-tremor-content-emphasis">Base: </span>
                     <Select value={baseIndicador} onValueChange={handleChangeBase} placeholder="Selecionar Base" ref={indicadorRef} enableClear={false} className="max-w-xs">
@@ -167,7 +189,8 @@ export default function Dashboard() {
 
                 <div>
                     <span className="text-xs text-tremor-content-emphasis">Indicador: </span>
-                    <Select value={indicadorVar} onValueChange={handleIndicador} placeholder="Selecionar Indicador" ref={indicadorRef} enableClear={false} className="max-w-2xl min-w-[32rem]">
+                    <Select value={indicadorVar} title={indicador.nome} onValueChange={handleIndicador} placeholder="Selecionar Indicador"
+                            ref={indicadorRef} enableClear={false} className="w-[46rem]">
                         {
                             indicadoresFiltrados.map(({id, nome}, index) => (
                                 <SelectItem value={id} key={index}>{nome}</SelectItem>
@@ -227,20 +250,27 @@ export default function Dashboard() {
                             <Spinner />
                         </div>
                     )
-                    : (<figure className="flex flex-col mt-10 items-center justify-center w-full">
-                        <div className="w-1/2">
-                            {
-                                mostrarVisualizacao === TipoVisualizacao.Grafico && <BarChartHero data={data} columns={columns} title={tituloGrafico} xAxisLabel={indicador.eixo_x} estiloGrafico={estiloGrafico} />
-                            }
-                            {
-                                mostrarVisualizacao === TipoVisualizacao.Tabela && <TableA11y data={data} columns={tableColumns} title={tituloGrafico} />
-                            }
+                    : (
+                        <div className="flex flex-col items-center gap-2 mt-10">
+                            {totalRegistros && <p><strong>Total de Registros: </strong>{Intl.NumberFormat('pt-BR').format(totalRegistros)}</p>}
+                            <figure className="flex flex-col items-center justify-center w-full">
+                                <div className={mostrarVisualizacao === TipoVisualizacao.Grafico ? "w-1/2" : "w-3/4"}>
+                                    {
+                                        mostrarVisualizacao === TipoVisualizacao.Grafico &&
+                                            <BarChartHero data={data} columns={columns} title={tituloGrafico} xAxisLabel={xAxis} estiloGrafico={estiloGrafico} />
+                                    }
+                                    {
+                                        mostrarVisualizacao === TipoVisualizacao.Tabela &&
+                                            <TableA11y data={data} columns={tableColumns} title={tituloGrafico} />
+                                    }
+                                </div>
+                                <div className="mt-10">
+                                    <AudioPlayer audioBase64={audio} />
+                                    <p className="highcharts-description flex mt-10 items-center justify-center w-full">{descricao}</p>
+                                </div>
+                            </figure>
                         </div>
-                        <div className="">
-                            <AudioPlayer audioBase64={audio} />
-                            <p className="highcharts-description flex mt-10 items-center justify-center w-full">{descricao}</p>
-                        </div>
-                    </figure>)
+                    )
             }
             </div>
         </>

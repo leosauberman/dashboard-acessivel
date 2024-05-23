@@ -15,10 +15,10 @@ const dataFormatter = (number: number) =>
     Intl.NumberFormat('pt').format(number).toString();
 
 interface BarChartProps extends HighchartsReact.Props {
-    data: [string, number][],
+    data: [string, number[]][],
     columns: string[],
     title: string;
-    xAxisLabel: string;
+    xAxisLabel: string[];
     estiloGrafico: EstiloGrafico;
 }
 
@@ -40,28 +40,51 @@ export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, columns, .
     });
 
     const formattedChartData = useMemo(() => {
-        const series = data.map(([header, value], index) => ({
-            name: header,
-            data: [value],
-            color: estiloGrafico === EstiloGrafico.Padroes ? {patternIndex: index} : null,
-            dataLabels: {
-                enabled: true,
-                align: 'center',
-                inside: false,
-                verticalAlign: 'middle',
-                format: '{y:.1f}%',
-                style: {
-                    fontWeight: 'bold',
-                    color: 'black'
+        let series: any[];
+        if(columns.length > 2) {
+            series = data.map(([header, value], index) => ({
+                name: header,
+                data: value,
+                color: estiloGrafico === EstiloGrafico.Padroes ? {patternIndex: index} : null,
+                dataLabels: {
+                    enabled: true,
+                    format: '{y:.2f}%',
+                    verticalAlign: "top",
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'black'
+                    }
+                },
+                tooltip: {
+                    valueSuffix: "%",
+                    valueDecimals: "2"
                 }
-            },
-            tooltip: {
-                valueSuffix: "%",
-                valueDecimals: "1"
-            }
-        }));
+            }));
+        }
+        else {
+            series = data.map(([header, value], index) => ({
+                name: header,
+                data: [value],
+                color: estiloGrafico === EstiloGrafico.Padroes ? {patternIndex: index} : null,
+                dataLabels: {
+                    enabled: true,
+                    align: 'center',
+                    inside: false,
+                    verticalAlign: 'middle',
+                    format: '{y:.1f}%',
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'black'
+                    }
+                },
+                tooltip: {
+                    valueSuffix: "%",
+                    valueDecimals: "1"
+                }
+            }));
+        }
 
-        return [{categories: [xAxisLabel]}, series];
+        return [{categories: xAxisLabel}, series];
     }, [data, xAxisLabel, estiloGrafico])
 
     useEffect(() => {

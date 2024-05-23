@@ -2,7 +2,7 @@ import {Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow} from 
 import {useMemo} from "react";
 
 interface TableA11yProps {
-    data: [string, number][],
+    data: [string, number[] | number][],
     columns: string[];
     title: string;
 }
@@ -26,7 +26,12 @@ export const TableA11y = ({data, columns, title}: TableA11yProps) => {
                             data.map(([k, v], i) => (
                                 <TableRow key={i}>
                                     <TableCell className="font-bold" tabIndex={0}>{k}</TableCell>
-                                    <TableCell tabIndex={0}>{Intl.NumberFormat('pt-BR').format(v)}%</TableCell>
+                                    {typeof v === "number"
+                                        ? <TableCell tabIndex={0}>{Intl.NumberFormat('pt-BR').format(v)}%</TableCell>
+                                        : v.map((val, key) =>
+                                            <TableCell key={key} tabIndex={0}>{Intl.NumberFormat('pt-BR').format(val)}%</TableCell>
+                                        )
+                                    }
                                 </TableRow>
                             ))
                         }
