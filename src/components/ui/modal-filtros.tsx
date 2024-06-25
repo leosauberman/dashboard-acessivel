@@ -1,4 +1,4 @@
-import {Dialog, DialogPanel, MultiSelect, MultiSelectItem, Title} from "@tremor/react";
+import {Dialog, DialogPanel, MultiSelect, MultiSelectItem, Select, SelectItem, Title} from "@tremor/react";
 import {PropsWithChildren} from "react";
 import {X} from "lucide-react";
 import {ESTADOS_UF} from "@/lib/estados-uf";
@@ -9,9 +9,11 @@ interface ModalFiltrosProps {
     setIsOpen: (val: boolean) => void;
     estado: string[],
     setEstado: (val: string[]) => void;
+    ano: number | undefined,
+    setAno: (val: number) => void;
 }
 
-export const ModalFiltros = ({isOpen, setIsOpen, children, estado, setEstado}: PropsWithChildren<ModalFiltrosProps>) => (
+export const ModalFiltros = ({isOpen, setIsOpen, children, estado, setEstado, ano, setAno}: PropsWithChildren<ModalFiltrosProps>) => (
     <Dialog open={isOpen} onClose={() => setIsOpen(false)}>
         <DialogPanel className="min-w-96 min-h-96">
             <div className="flex justify-between items-center">
@@ -40,6 +42,16 @@ export const ModalFiltros = ({isOpen, setIsOpen, children, estado, setEstado}: P
                         }
                     </MultiSelect>
                 </div>*/}
+                <div className="flex flex-col items-start gap-2 grow">
+                    <label htmlFor="anos">Ano: </label>
+                    <Select id="anos" value={ano?.toString() ?? ""} onValueChange={(value) => setAno(parseInt(value))} placeholder="Selecionar Ano" className="w-full max-w-sm">
+                        {
+                            ANOS.map((value, i) => (
+                                <SelectItem value={value.toString()} key={i}>{value}</SelectItem>
+                            ))
+                        }
+                    </Select>
+                </div>
                 <div className="basis-full h-0" />
                 <div className="flex flex-col items-start gap-2 grow">
                     <label htmlFor="estado">UF: </label>

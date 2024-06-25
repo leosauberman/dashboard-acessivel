@@ -58,6 +58,10 @@ export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, columns, .
                 tooltip: {
                     valueSuffix: "%",
                     valueDecimals: "2"
+                },
+                dataSorting: {
+                    enabled: true,
+                    dataSorting: "name"
                 }
             }));
         }
@@ -80,6 +84,10 @@ export const BarChartHero = ({data, title, xAxisLabel, estiloGrafico, columns, .
                 tooltip: {
                     valueSuffix: "%",
                     valueDecimals: "1"
+                },
+                dataSorting: {
+                    enabled: true,
+                    dataSorting: "name"
                 }
             }));
         }

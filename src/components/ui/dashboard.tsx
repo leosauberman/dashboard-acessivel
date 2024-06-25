@@ -20,8 +20,8 @@ export default function Dashboard() {
     const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>(TipoVisualizacao.Grafico);
     const [estiloGrafico, setEstiloGrafico] = useState<EstiloGrafico>(EstiloGrafico.Cores);
     const [estado, setEstado] = useState<string[]>([]);
-    /*const [ano, setAno] = useState<string[]>([]);
-    const [regiao, setRegiao] = useState<string[]>([]);*/
+    const [ano, setAno] = useState<number>();
+    /*const [regiao, setRegiao] = useState<string[]>([]);*/
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tituloGrafico, setTituloGrafico] = useState("");
     const [filtros, setFiltros] = useState({});
@@ -41,16 +41,18 @@ export default function Dashboard() {
     const estilos: {value:EstiloGrafico, label: string}[] = [{ value: EstiloGrafico.Cores, label: "Cores" }, { value: EstiloGrafico.Padroes, label: "Padrões"}]
     const salvar = useCallback(() => {
         setIsModalOpen(false);
-        if(estado){
+        if(estado || ano) {
+            const baseFiltros = { ano_nasc: [ano] }
+            const estadoFiltro = estado.length > 0 ? estado : undefined;
             if(baseIndicador === BaseIndicadorEnum.BPC) {
-                setFiltros({ sigla_uf: estado });
+                setFiltros({ ...baseFiltros, sigla_uf: estadoFiltro });
             }
             else {
-                setFiltros({ res_SIGLA_UF: estado });
+                setFiltros({ ...baseFiltros, res_SIGLA_UF: estadoFiltro });
             }
         }
         indicadorChanged.current = true;
-    }, [estado, baseIndicador])
+    }, [estado, baseIndicador, ano])
 
     const aplicarSelecao = useCallback(async (indicadorSelecionado: Indicador) => {
         setIsLoading(true);
@@ -236,7 +238,11 @@ export default function Dashboard() {
                         <Filter size={36} color="#054e7a" />
                     </button>
                 </div>
-                <ModalFiltros isOpen={isModalOpen} setIsOpen={setIsModalOpen} estado={estado} setEstado={setEstado}>
+                <ModalFiltros
+                    isOpen={isModalOpen} setIsOpen={setIsModalOpen}
+                    estado={estado} setEstado={setEstado}
+                    ano={ano} setAno={setAno}
+                >
                     <div className="flex justify-end w-full">
                         <Button className="focus:bg-tremor-brand-emphasis" onClick={() => salvar()}>Salvar</Button>
                     </div>
